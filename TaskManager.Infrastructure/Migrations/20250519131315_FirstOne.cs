@@ -203,12 +203,19 @@ namespace TaskManager.Infrastructure.Migrations
                     TeamId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AssignedToMemberId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    AssignedToId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Role = table.Column<int>(type: "int", nullable: false),
                     JoinedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Members", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Members_Members_AssignedToId",
+                        column: x => x.AssignedToId,
+                        principalTable: "Members",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Members_Teams_TeamId",
                         column: x => x.TeamId,
@@ -249,7 +256,7 @@ namespace TaskManager.Infrastructure.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DueDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AssignedToMemberId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     TeamId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     MemberId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
@@ -273,7 +280,7 @@ namespace TaskManager.Infrastructure.Migrations
                         column: x => x.TeamId,
                         principalTable: "Teams",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -319,6 +326,11 @@ namespace TaskManager.Infrastructure.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Members_AssignedToId",
+                table: "Members",
+                column: "AssignedToId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Members_TeamId",

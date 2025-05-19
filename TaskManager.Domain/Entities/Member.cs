@@ -15,6 +15,9 @@ namespace TaskManager.Domain.Entities
 
         public string Email { get; set; } = null!;
 
+        public Guid? AssignedToMemberId { get; set; }
+        public Member? AssignedTo { get; set; }
+
         public MemberRole Role { get; set; } = MemberRole.Member;
 
         public DateTime JoinedAt { get; set; } = DateTime.UtcNow;

@@ -12,7 +12,7 @@ using TaskManager.Infrastructure.Persistence;
 namespace TaskManager.Infrastructure.Migrations
 {
     [DbContext(typeof(TaskManagerDbContext))]
-    [Migration("20250519124954_FirstOne")]
+    [Migration("20250519131315_FirstOne")]
     partial class FirstOne
     {
         /// <inheritdoc />
@@ -192,6 +192,12 @@ namespace TaskManager.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("AssignedToId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssignedToMemberId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -209,6 +215,8 @@ namespace TaskManager.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AssignedToId");
 
                     b.HasIndex("TeamId");
 
@@ -236,8 +244,9 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<Guid?>("MemberId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uniqueidentifier");
@@ -455,11 +464,17 @@ namespace TaskManager.Infrastructure.Migrations
 
             modelBuilder.Entity("TaskManager.Domain.Entities.Member", b =>
                 {
+                    b.HasOne("TaskManager.Domain.Entities.Member", "AssignedTo")
+                        .WithMany()
+                        .HasForeignKey("AssignedToId");
+
                     b.HasOne("TaskManager.Domain.Entities.Team", "Team")
                         .WithMany("Members")
                         .HasForeignKey("TeamId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("AssignedTo");
 
                     b.Navigation("Team");
                 });
@@ -478,7 +493,7 @@ namespace TaskManager.Infrastructure.Migrations
                     b.HasOne("TaskManager.Domain.Entities.Team", "Team")
                         .WithMany("Tasks")
                         .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("AssignedTo");

@@ -1,8 +1,10 @@
-using System.Reflection;
 using Microsoft.AspNetCore.Identity;
 using TaskManager.Infrastructure.Extentions;
 using TaskManager.Infrastructure.Identity;
 using TaskManager.Infrastructure.Persistence;
+using TaskManager.Application.Extensions;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +17,7 @@ builder.Services.AddSwaggerGen();
 
 
 
-//builder.Services.AddApplication();
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
@@ -23,6 +25,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>()
     .AddDefaultTokenProviders();
 
 
+
+//builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 
 
 var app = builder.Build();
