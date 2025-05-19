@@ -37,13 +37,19 @@ public class TeamsController : ControllerBase
         return Ok(team);
     }
 
-    // POST: api/teams
+
+
     [HttpPost]
-    public async Task<ActionResult> CreateTeam([FromBody] CreateTeamRequestDto request)
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<TeamDto>> CreateTeam([FromBody] CreateTeamRequestDto request)
     {
-        var teamId = await _teamService.CreateTeamAsync(request);
-        return CreatedAtAction(nameof(GetById), new { id = teamId }, null);
+        var createdTeam = await _teamService.CreateTeamAsync(request);
+        return CreatedAtAction(nameof(GetById), new { id = createdTeam.Id }, createdTeam);
     }
+
+
 
     // PUT: api/teams/{id}
     [HttpPut("{id}")]
