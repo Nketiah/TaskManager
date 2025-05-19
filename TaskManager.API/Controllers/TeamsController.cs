@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Net;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using TaskManager.API.Shared;
 using TaskManager.Application.DTOs.Team;
 using TaskManager.Application.Teams;
+using TaskManager.Domain.Entities;
 
 
 
@@ -12,29 +16,78 @@ namespace TaskManager.API.Controllers;
 public class TeamsController : ControllerBase
 {
     private readonly ITeamService _teamService;
+    protected APIResponse _response;
+    private readonly IMapper _mapper;
 
-    public TeamsController(ITeamService teamService)
+    public TeamsController(ITeamService teamService, IMapper mapper)
     {
         _teamService = teamService;
+        _response = new();
+        _mapper = mapper;
     }
 
-    // GET: api/teams
+
     [HttpGet]
-    public async Task<ActionResult<List<TeamDto>>> GetAll()
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<APIResponse>> GetAll()
     {
-        var teams = await _teamService.GetAllTeamsAsync();
-        return Ok(teams);
+        try
+        {
+            var teamList = await _teamService.GetAllTeamsAsync();
+            _response.Result = _mapper.Map<List<TeamDto>>(teamList);
+            _response.StatusCode = HttpStatusCode.OK;
+            return Ok(_response);
+        }
+        catch (Exception ex)
+        {
+            _response.IsSuccess = false;
+            _response.ErrorMessages = new List<string>() { ex.ToString() };
+        }
+
+        return _response;
     }
 
-    // GET: api/teams/{id}
-    [HttpGet("{id}")]
-    public async Task<ActionResult<TeamDto>> GetById(Guid id)
-    {
-        var team = await _teamService.GetTeamByIdAsync(id);
-        if (team == null)
-            return NotFound();
 
-        return Ok(team);
+
+
+
+    [HttpGet("{id:guid}", Name = "GetById")]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<APIResponse>> GetById(Guid id)
+    {
+        try
+        {
+            if (id == Guid.Empty)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                return BadRequest(_response);
+            }
+
+            var team = await _teamService.GetTeamByIdAsync(id);
+            if (team == null)
+            {
+                _response.StatusCode = HttpStatusCode.NotFound;
+                return NotFound(_response);
+            }
+
+            _response.Result = _mapper.Map<TeamDto>(team);
+            _response.StatusCode = HttpStatusCode.OK;
+            return Ok(_response);
+        }
+        catch (Exception ex)
+        {
+
+            _response.IsSuccess = false;
+            _response.ErrorMessages = new List<string>() { ex.ToString() };
+        }
+
+        return _response;
     }
 
 
@@ -43,34 +96,98 @@ public class TeamsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<TeamDto>> CreateTeam([FromBody] CreateTeamRequestDto request)
+    public async Task<ActionResult<APIResponse>> CreateTeam([FromBody] CreateTeamRequestDto request)
     {
-        var createdTeam = await _teamService.CreateTeamAsync(request);
-        return CreatedAtAction(nameof(GetById), new { id = createdTeam.Id }, createdTeam);
+        try
+        {
+            if(request == null)
+            {
+                return BadRequest(request);
+            }
+
+            Team team = _mapper.Map<Team>(request);
+
+            var createdTeam = await _teamService.CreateTeamAsync(request);
+            _response.Result = _mapper.Map<TeamDto>(team);
+            _response.StatusCode = HttpStatusCode.Created;
+            return CreatedAtRoute("GetById", new { id = team.Id }, _response);
+        }
+        catch (Exception ex)
+        {
+
+            _response.IsSuccess = false;
+            _response.ErrorMessages = new List<string>() { ex.ToString() };
+        }
+
+        return _response;
     }
 
 
 
-    // PUT: api/teams/{id}
+    
     [HttpPut("{id}")]
-    public async Task<ActionResult> UpdateTeam(Guid id, [FromBody] UpdateTeamRequestDto request)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<APIResponse>> UpdateTeam(Guid id, [FromBody] UpdateTeamRequestDto request)
     {
-        var updated = await _teamService.UpdateTeamAsync(id, request);
-        if (!updated)
-            return NotFound();
+        try
+        {
+            if(request == null || id != request.Id)
+            {
+                return BadRequest(request);
+            }
 
-        return NoContent();
+            Team model = _mapper.Map<Team>(request);
+            var updated = await _teamService.UpdateTeamAsync(id, request);
+            _response.StatusCode = HttpStatusCode.NoContent;
+            _response.IsSuccess = true;
+            return Ok(_response);
+        }
+        catch (Exception ex)
+        {
+            _response.IsSuccess = false;
+            _response.ErrorMessages = new List<string>() { ex.ToString() };
+        }
+        return _response;
     }
 
-    // DELETE: api/teams/{id}
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteTeam(Guid id)
-    {
-        var deleted = await _teamService.DeleteTeamAsync(id);
-        if (!deleted)
-            return NotFound();
+   
 
-        return NoContent();
+
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<APIResponse>> DeleteTeam(Guid id)
+    {
+        try
+        {
+            if(id == Guid.Empty)
+            {
+                return BadRequest(id);
+            }
+
+            var team = await _teamService.GetTeamByIdAsync(id);
+            if (team == null)
+            {
+                return NotFound();
+            }
+
+            await _teamService.DeleteTeamAsync(id);
+            _response.StatusCode = HttpStatusCode.NoContent;
+            _response.IsSuccess = true;
+            return Ok(_response);
+        }
+        catch (Exception ex)
+        {
+
+            _response.IsSuccess = false;
+            _response.ErrorMessages = new List<string>() { ex.ToString() };
+        }
+
+        return _response;
     }
 
 }
