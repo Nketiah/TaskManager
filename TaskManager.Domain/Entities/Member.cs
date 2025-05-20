@@ -2,6 +2,7 @@
 
 using TaskManager.Domain.Enums;
 
+
 namespace TaskManager.Domain.Entities
 {
     public class Member
@@ -11,7 +12,7 @@ namespace TaskManager.Domain.Entities
         public Guid TeamId { get; set; }
         public Team Team { get; set; } = null!;
 
-        public Guid UserId { get; set; } // Link to your Identity/User table
+        public Guid UserId { get; set; }
 
         public string Email { get; set; } = null!;
 

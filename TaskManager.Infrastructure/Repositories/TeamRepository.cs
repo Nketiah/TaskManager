@@ -48,4 +48,11 @@ public class TeamRepository : ITeamRepository
         _db.Teams.Update(team);
         await _db.SaveChangesAsync();
     }
+
+    public async Task AddMemberAsync(Member member)
+    {
+        await _db.Members.AddAsync(member);
+        await _db.SaveChangesAsync();
+    }
+
 }

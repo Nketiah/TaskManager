@@ -2,7 +2,7 @@
 {
     public enum MemberRole
     {
-        Owner,
+        Owner = 1,
         Admin,
         Member
     }

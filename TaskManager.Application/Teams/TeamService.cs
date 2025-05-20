@@ -20,10 +20,10 @@ public class TeamService : ITeamService
         _mapper = mapper;
     }
 
-    public async Task<TeamDto> CreateTeamAsync(CreateTeamRequestDto request)
+    public async Task<TeamDto> CreateTeamAsync(Team teamRequest)
     {
-        _logger.LogInformation("Creating a new team with name: {Name}", request.Name);
-        var team = _mapper.Map<Team>(request);
+        _logger.LogInformation("Creating a new team with name: {Name}", teamRequest.Name);
+        var team = _mapper.Map<Team>(teamRequest);
         team.Id = Guid.NewGuid();
         team.CreatedAt = DateTime.UtcNow;
         await _teamRepository.AddAsync(team);
@@ -64,18 +64,27 @@ public class TeamService : ITeamService
     }
 
 
-    public async Task<bool> UpdateTeamAsync(Guid teamId, UpdateTeamRequestDto request)
+    public async Task<Team?> UpdateTeamAsync(Guid teamId, UpdateTeamRequestDto request)
     {
-        _logger.LogInformation($"Updating team with id ${teamId}");
-        var existingTeam = await _teamRepository.GetByIdAsync(teamId);
+        var team = await _teamRepository.GetByIdAsync(teamId);
+        if (team == null)
+        {
+            return null;
+        }
 
-        if (existingTeam == null)
-            return false;
+        team.Name = request.Name;
+        team.Description = request.Description;
 
-        _mapper.Map(request, existingTeam);
-        await _teamRepository.UpdateAsync(existingTeam);
-
-        return true;
+        await _teamRepository.UpdateAsync(team);
+        return team;
     }
+
+
+    public async Task AddMemberAsync(Member member)
+    {
+        await _teamRepository.AddMemberAsync(member);
+    }
+
+
 
 }

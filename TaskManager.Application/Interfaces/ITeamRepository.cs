@@ -11,4 +11,5 @@ public interface ITeamRepository
     Task AddAsync(Team team);
     Task UpdateAsync(Team team);
     Task DeleteAsync(Team team);
+    Task AddMemberAsync(Member member);
 }

@@ -1,5 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Net;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TaskManager.API.Shared;
+using TaskManager.Application.Account;
+using TaskManager.Application.DTOs.Account;
+
+
+
 
 namespace TaskManager.API.Controllers
 {
@@ -7,5 +14,75 @@ namespace TaskManager.API.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
+        private readonly IAccountService _accountService;
+        protected APIResponse _apiResponse;
+
+        public AccountController(IAccountService accountService)
+        {
+            _accountService = accountService;
+            _apiResponse = new();
+        }
+
+
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+        {
+            try
+            {
+                var (result, errors) = await _accountService.RegisterAsync(request);
+
+                if (!result.IsSuccess)
+                {
+                    _apiResponse.IsSuccess = false;
+                    _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _apiResponse.ErrorMessages = errors.Any() ? errors : new List<string> { "User registration failed." };
+                    return BadRequest(_apiResponse);
+                }
+
+                _apiResponse.IsSuccess = true;
+                _apiResponse.StatusCode = HttpStatusCode.Created;
+                _apiResponse.Result = result;
+                return StatusCode((int)HttpStatusCode.Created, _apiResponse);
+            }
+            catch (Exception ex)
+            {
+                _apiResponse.IsSuccess = false;
+                _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
+                _apiResponse.ErrorMessages.Add("An unexpected error occurred.");
+                _apiResponse.ErrorMessages.Add(ex.Message);
+                return StatusCode((int)HttpStatusCode.InternalServerError, _apiResponse);
+            }
+        }
+
+
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
+        {
+            var loginResponse = await _accountService.LoginAsync(request);
+
+            if (loginResponse == null || loginResponse.User == null || !loginResponse.User.IsSuccess)
+            {
+                return Unauthorized(new { Message = "Invalid login credentials." });
+            }
+
+            return Ok(loginResponse);
+        }
+
+
+
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            var user = HttpContext.User.Identity;
+            Console.WriteLine($"User Authenticated: {user?.IsAuthenticated}");
+            Console.WriteLine($"User Name: {user?.Name}");
+
+            await _accountService.LogoutAsync();
+            return NoContent();
+        }
+
     }
 }

@@ -1,5 +1,7 @@
 ﻿
 
+using TaskManager.Application.DTOs.Member;
+
 namespace TaskManager.Application.DTOs.Team;
 
 public class TeamDto
@@ -12,4 +14,6 @@ public class TeamDto
     public DateTime CreatedAt { get; set; }
 
     public int MemberCount { get; set; }
+
+    public List<MemberDto> Members { get; set; } = new();
 }

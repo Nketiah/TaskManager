@@ -1,0 +1,7 @@
+﻿
+namespace TaskManager.Application.DTOs.Account;
+
+public class LoginResponseDTO
+{
+    public UserDTO User { get; set; }
+}
