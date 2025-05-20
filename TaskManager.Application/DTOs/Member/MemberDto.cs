@@ -1,5 +1,6 @@
 ﻿
 
+using TaskManager.Application.DTOs.Task;
 using TaskManager.Domain.Enums;
 
 namespace TaskManager.Application.DTOs.Member;
@@ -17,4 +18,6 @@ public class MemberDto
     public MemberRole Role { get; set; }
 
     public DateTime JoinedAt { get; set; }
+
+    public List<TaskDto> AssignedTasks { get; set; } = new();
 }

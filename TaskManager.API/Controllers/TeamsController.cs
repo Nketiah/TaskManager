@@ -3,6 +3,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskManager.API.Shared;
+using TaskManager.Application.DTOs.Member;
 using TaskManager.Application.DTOs.Team;
 using TaskManager.Application.Teams;
 using TaskManager.Domain.Entities;
@@ -104,10 +105,9 @@ public class TeamsController : ControllerBase
         try
         {
             if (request == null)
-                return BadRequest(request);
+                return BadRequest("Invalid request payload.");
 
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-            var emailClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Email);
 
             if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid ownerId))
             {
@@ -117,9 +117,6 @@ public class TeamsController : ControllerBase
                 return Unauthorized(_response);
             }
 
-            var email = emailClaim?.Value ?? "unknown@example.com";
-
-            
             var team = new Team
             {
                 Name = request.Name,
@@ -129,18 +126,6 @@ public class TeamsController : ControllerBase
 
             var createdTeam = await _teamService.CreateTeamAsync(team);
 
-            
-            var member = new Member
-            {
-                TeamId = createdTeam.Id,
-                UserId = ownerId,
-                Email = email,
-                Role = MemberRole.Owner
-            };
-
-            
-            await _teamService.AddMemberAsync(member);
-
             _response.Result = _mapper.Map<TeamDto>(createdTeam);
             _response.StatusCode = HttpStatusCode.Created;
 
@@ -149,15 +134,17 @@ public class TeamsController : ControllerBase
         catch (Exception ex)
         {
             _response.IsSuccess = false;
-            _response.ErrorMessages = new List<string> { ex.ToString() };
-            return _response;
+            _response.StatusCode = HttpStatusCode.InternalServerError;
+            _response.ErrorMessages = new List<string> { ex.Message };
+            return StatusCode(StatusCodes.Status500InternalServerError, _response);
         }
     }
 
 
 
 
- [HttpPut("{id}")]
+
+[HttpPut("{id}")]
 [ProducesResponseType(StatusCodes.Status200OK)]
 [ProducesResponseType(StatusCodes.Status400BadRequest)]
 public async Task<ActionResult<APIResponse>> UpdateTeam(Guid id, [FromBody] UpdateTeamRequestDto request)
@@ -232,4 +219,83 @@ public async Task<ActionResult<APIResponse>> UpdateTeam(Guid id, [FromBody] Upda
         return _response;
     }
 
+
+
+    [HttpGet("{teamId}/members-with-tasks")]
+    public async Task<ActionResult<APIResponse>> GetMembersWithTasks(Guid teamId)
+    {
+        var members = await _teamService.GetMembersWithTasksByTeamIdAsync(teamId);
+
+        _response.Result = members;
+        _response.StatusCode = HttpStatusCode.OK;
+
+        return Ok(_response);
+    }
+
+
+    [HttpPost("add-member")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<APIResponse>> AddMemberToTeam([FromBody] AddMemberRequestDto request)
+    {
+        try
+        {
+            var existingMember = await _teamService.GetMemberByUserIdAsync(request.UserId, request.TeamId);
+            if (existingMember != null)
+            {
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.ErrorMessages.Add("User is already a member of this team.");
+                return BadRequest(_response);
+            }
+
+            var team = await _teamService.GetTeamByIdAsync(request.TeamId);
+            if (team == null)
+            {
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.ErrorMessages.Add("Team not found.");
+                return NotFound(_response);
+            }
+
+            var member = new Member
+            {
+                TeamId = request.TeamId,
+                UserId = request.UserId,
+                Email = request.Email,
+                Role = request.Role
+            };
+
+            await _teamService.AddMemberAsync(member);
+
+            // Map to DTO to avoid circular reference issues
+            var memberDto = new MemberDto
+            {
+                Id = member.Id,
+                TeamId = member.TeamId,
+                UserId = member.UserId,
+                Email = member.Email,
+                Role = member.Role
+            };
+
+            _response.IsSuccess = true;
+            _response.StatusCode = HttpStatusCode.Created;
+            _response.Result = memberDto;
+
+            return CreatedAtAction(nameof(AddMemberToTeam), new { id = member.Id }, _response);
+        }
+        catch (Exception ex)
+        {
+            _response.IsSuccess = false;
+            _response.ErrorMessages.Add(ex.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, _response);
+        }
+    }
+
+
 }
+
+// Team B id  8eac8abd-e132-4ce7-9e76-9835c19e7fc0
+// nancy id   cdabd140-05eb-437f-9d74-692bc1611d66

@@ -258,8 +258,7 @@ namespace TaskManager.Infrastructure.Migrations
                     DueDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AssignedToMemberId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    TeamId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    MemberId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    TeamId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -269,12 +268,7 @@ namespace TaskManager.Infrastructure.Migrations
                         column: x => x.AssignedToMemberId,
                         principalTable: "Members",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_Tasks_Members_MemberId",
-                        column: x => x.MemberId,
-                        principalTable: "Members",
-                        principalColumn: "Id");
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Tasks_Teams_TeamId",
                         column: x => x.TeamId,
@@ -341,11 +335,6 @@ namespace TaskManager.Infrastructure.Migrations
                 name: "IX_Tasks_AssignedToMemberId",
                 table: "Tasks",
                 column: "AssignedToMemberId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Tasks_MemberId",
-                table: "Tasks",
-                column: "MemberId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tasks_TeamId",

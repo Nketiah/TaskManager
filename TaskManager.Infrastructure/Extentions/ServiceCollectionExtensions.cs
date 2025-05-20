@@ -19,6 +19,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITeamRepository, TeamRepository>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IAccountRepository, AccountRepository>();
-        //services.AddScoped<IRestaurantsRepository, RestaurantsRepository>();
+        services.AddScoped<ITaskRepository, TaskRepository>();
+        services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
     }
 }

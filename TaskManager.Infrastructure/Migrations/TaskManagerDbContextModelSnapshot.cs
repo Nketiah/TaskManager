@@ -238,9 +238,6 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("MemberId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -256,8 +253,6 @@ namespace TaskManager.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssignedToMemberId");
-
-                    b.HasIndex("MemberId");
 
                     b.HasIndex("TeamId");
 
@@ -479,13 +474,9 @@ namespace TaskManager.Infrastructure.Migrations
             modelBuilder.Entity("TaskManager.Domain.Entities.TaskItem", b =>
                 {
                     b.HasOne("TaskManager.Domain.Entities.Member", "AssignedTo")
-                        .WithMany()
-                        .HasForeignKey("AssignedToMemberId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("TaskManager.Domain.Entities.Member", null)
                         .WithMany("AssignedTasks")
-                        .HasForeignKey("MemberId");
+                        .HasForeignKey("AssignedToMemberId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("TaskManager.Domain.Entities.Team", "Team")
                         .WithMany("Tasks")

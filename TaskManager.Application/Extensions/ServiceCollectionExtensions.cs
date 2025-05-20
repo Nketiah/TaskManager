@@ -1,9 +1,12 @@
 ﻿
 using Microsoft.Extensions.DependencyInjection;
 using TaskManager.Application.Account;
+using TaskManager.Application.ActivityLogs;
 using TaskManager.Application.Interfaces;
 using TaskManager.Application.Services;
+using TaskManager.Application.Tasks;
 using TaskManager.Application.Teams;
+
 
 namespace TaskManager.Application.Extensions;
 
@@ -13,6 +16,8 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<ITeamService, TeamService>();
         services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<ITaskService, TaskService>();
+        services.AddScoped<IActivityLogService, ActivityLogService>();
         services.AddAutoMapper(typeof(ServiceCollectionExtensions).Assembly);
     }
 }

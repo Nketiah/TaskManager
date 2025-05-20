@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Reflection.Emit;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TaskManager.Domain.Entities;
@@ -62,8 +63,6 @@ namespace TaskManager.Infrastructure.Persistence
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-
-
             builder.Entity<TeamInvitation>(entity =>
             {
                 entity.HasKey(i => i.Id);
@@ -71,9 +70,15 @@ namespace TaskManager.Infrastructure.Persistence
                 entity.HasOne(i => i.Team)
                       .WithMany()
                       .HasForeignKey(i => i.TeamId)
-                      .OnDelete(DeleteBehavior.Cascade); 
+                      .OnDelete(DeleteBehavior.Cascade);
             });
-        }
+
+            builder.Entity<TaskItem>()
+                   .HasOne(t => t.AssignedTo)
+                   .WithMany(m => m.AssignedTasks)
+                   .HasForeignKey(t => t.AssignedToMemberId)
+                   .OnDelete(DeleteBehavior.Restrict);
+            }
 
     }
 }

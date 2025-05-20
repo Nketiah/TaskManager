@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
+using TaskManager.Application.DTOs.Member;
 using TaskManager.Application.DTOs.Team;
 using TaskManager.Application.Interfaces;
 using TaskManager.Domain.Entities;
@@ -85,6 +86,25 @@ public class TeamService : ITeamService
         await _teamRepository.AddMemberAsync(member);
     }
 
+    public async Task<Team?> GetTeamByMemberId(Guid memberId)
+    {
+        return await _teamRepository.GetTeamByMemberId(memberId);
+    }
 
 
+    public async Task<List<MemberDto>> GetMembersWithTasksByTeamIdAsync(Guid teamId)
+    {
+        var members = await _teamRepository.GetMembersWithTasksByTeamIdAsync(teamId);
+        return _mapper.Map<List<MemberDto>>(members);
+    }
+
+    public async Task<Member?> GetMemberByUserIdAsync(Guid userId, Guid teamId)
+    {
+        return await _teamRepository.GetMemberByUserIdAsync(userId, teamId);
+    }
+
+    public Task<string?> GetUserFullNameByMemberIdAsync(Guid memberId)
+    {
+        return _teamRepository.GetUserFullNameByMemberIdAsync(memberId);
+    }
 }
