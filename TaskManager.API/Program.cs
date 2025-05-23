@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+    using Microsoft.AspNetCore.Identity;
 using TaskManager.Infrastructure.Extentions;
 using TaskManager.Infrastructure.Identity;
 using TaskManager.Infrastructure.Persistence;

@@ -2,6 +2,7 @@
 
 using TaskManager.Application.DTOs.Member;
 using TaskManager.Application.DTOs.Team;
+using TaskManager.Application.Interfaces;
 using TaskManager.Domain.Entities;
 
 namespace TaskManager.Application.Teams
@@ -17,7 +18,11 @@ namespace TaskManager.Application.Teams
         Task<Team?> GetTeamByMemberId(Guid memberId);
         Task<List<MemberDto>> GetMembersWithTasksByTeamIdAsync(Guid teamId);
         Task<Member?> GetMemberByUserIdAsync(Guid userId, Guid teamId);
-        Task<string?> GetUserFullNameByMemberIdAsync(Guid memberId);
+        Task<string?> GetUserFullNameByMemberIdAsync(Guid? memberId);
+        Task SendTeamInviteAsync(SendTeamInviteDto dto);
+        Task<TeamInvitation?> GetInvitationByTokenAsync(string token);
+        Task UpdateInvitationAsync(TeamInvitation invitation);
+        Task<Member?> GetMemberByIdAsync(Guid memberId);
     }
 }
 

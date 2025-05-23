@@ -9,6 +9,8 @@ using TaskManager.Application.DTOs.Task;
 using TaskManager.Application.Teams;
 using Microsoft.EntityFrameworkCore;
 using TaskManager.Application.ActivityLogs;
+using TaskManager.Application.Interfaces;
+using TaskManager.Infrastructure.Logging;
 
 namespace TaskManager.API.Controllers
 {
@@ -22,14 +24,16 @@ namespace TaskManager.API.Controllers
         private readonly IActivityLogService _activityLogService;
         private readonly IMapper _mapper;
         private readonly APIResponse _response;
+        private readonly IFileLogger _fileLogger;
 
-        public TaskController(ITaskService taskService, IMapper mapper, ITeamService teamService, IActivityLogService activityLogService)
+        public TaskController(ITaskService taskService, IMapper mapper, ITeamService teamService, IActivityLogService activityLogService, IFileLogger fileLogger)
         {
             _taskService = taskService;
             _teamService = teamService;
             _mapper = mapper;
             _response = new APIResponse();
             _activityLogService = activityLogService;
+            _fileLogger = fileLogger;
         }
 
         [HttpGet("{id}")]
@@ -78,6 +82,15 @@ namespace TaskManager.API.Controllers
                 return BadRequest(_response);
             }
 
+            var assignedMember = await _teamService.GetMemberByIdAsync(request.AssignedToMemberId.Value);
+            if (assignedMember == null)
+            {
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.NotFound;
+                _response.ErrorMessages.Add($"No member found with Id '{request.AssignedToMemberId}'.");
+                return NotFound(_response);
+            }
+
             var task = _mapper.Map<TaskItem>(request);
             task.TeamId = request.TeamId;
 
@@ -92,7 +105,7 @@ namespace TaskManager.API.Controllers
             action: "Create Task",
             performedBy: userName ?? "Some User", 
             details: $"Task '{task.Title}' was created."
-);
+           );
 
             return CreatedAtAction(nameof(GetTaskById), new { id = created.Id }, _response);
         }
@@ -133,6 +146,7 @@ namespace TaskManager.API.Controllers
             }
             catch (Exception ex)
             {
+                _fileLogger.LogException(ex, "TaskController.Update");
                 _response.IsSuccess = false;
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.ErrorMessages.Add("An unexpected error occurred: " + ex.Message);

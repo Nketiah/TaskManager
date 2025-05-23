@@ -15,5 +15,9 @@ public interface ITeamRepository
     Task<Team?> GetTeamByMemberId(Guid memberId);
     Task<List<Member>> GetMembersWithTasksByTeamIdAsync(Guid teamId);
     Task<Member?> GetMemberByUserIdAsync(Guid userId, Guid teamId);
-    Task<string?> GetUserFullNameByMemberIdAsync(Guid memberId);
+    Task<string?> GetUserFullNameByMemberIdAsync(Guid? memberId);
+    Task<TeamInvitation> CreateTeamInvitationAsync(Guid teamId, string email);
+    Task<TeamInvitation?> GetInvitationByTokenAsync(string token);
+    Task UpdateInvitationAsync(TeamInvitation invitation);
+    Task<Member?> GetMemberByIdAsync(Guid memberId);
 }

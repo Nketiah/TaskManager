@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskManager.Application.DTOs.Member;
 using TaskManager.Application.Interfaces;
 using TaskManager.Domain.Entities;
+using TaskManager.Domain.Enums;
 using TaskManager.Infrastructure.Persistence;
 
 
@@ -78,7 +79,7 @@ public class TeamRepository : ITeamRepository
             .FirstOrDefaultAsync(m => m.UserId == userId && m.TeamId == teamId);
     }
 
-    public async Task<string?> GetUserFullNameByMemberIdAsync(Guid memberId)
+    public async Task<string?> GetUserFullNameByMemberIdAsync(Guid? memberId)
     {
         return await _db.Members
             .Where(m => m.Id == memberId)
@@ -88,5 +89,45 @@ public class TeamRepository : ITeamRepository
                   (member, user) => user.FullName) // or user.Email
             .FirstOrDefaultAsync();
     }
+
+
+    public async Task<TeamInvitation> CreateTeamInvitationAsync(Guid teamId, string email)
+    {
+        var token = Guid.NewGuid().ToString();
+
+        var invitation = new TeamInvitation
+        {
+            TeamId = teamId,
+            Email = email,
+            Token = token,
+            Status = InvitationStatus.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _db.TeamInvitations.AddAsync(invitation);
+        await _db.SaveChangesAsync();
+
+        return invitation;
+    }
+
+
+    public async Task<TeamInvitation?> GetInvitationByTokenAsync(string token)
+    {
+        return await _db.TeamInvitations.FirstOrDefaultAsync(i => i.Token == token);
+    }
+
+    public async Task UpdateInvitationAsync(TeamInvitation invitation)
+    {
+        _db.TeamInvitations.Update(invitation);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<Member?> GetMemberByIdAsync(Guid memberId)
+    {
+        return await _db.Members
+            .Include(m => m.AssignedTasks)
+            .FirstOrDefaultAsync(m => m.Id == memberId);
+    }
+
 
 }

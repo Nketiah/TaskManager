@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TaskManager.API.Shared;
 using TaskManager.Application.Account;
 using TaskManager.Application.DTOs.Account;
+using TaskManager.Application.Interfaces;
 
 
 
@@ -15,11 +16,13 @@ namespace TaskManager.API.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
+        private readonly IEmailService _emailService;
         protected APIResponse _apiResponse;
 
-        public AccountController(IAccountService accountService)
+        public AccountController(IAccountService accountService, IEmailService emailService)
         {
             _accountService = accountService;
+            _emailService = emailService;
             _apiResponse = new();
         }
 
@@ -67,7 +70,13 @@ namespace TaskManager.API.Controllers
                 return Unauthorized(new { Message = "Invalid login credentials." });
             }
 
+            //await _emailService.SendEmailAsync(
+            //    toEmail: "nketiahjoseph1@gmail.com",
+            //    subject: "Login Notification",
+            //    body: $"Hello {loginResponse.User.FullName},\n\nYou have successfully logged in.\n\nBest regards,\nTaskManager Team"
+            //);
             return Ok(loginResponse);
+            // pwzn olgu yqls mpmv
         }
 
 

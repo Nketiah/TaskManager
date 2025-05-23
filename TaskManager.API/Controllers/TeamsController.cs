@@ -3,8 +3,10 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskManager.API.Shared;
+using TaskManager.Application.Account;
 using TaskManager.Application.DTOs.Member;
 using TaskManager.Application.DTOs.Team;
+using TaskManager.Application.Interfaces;
 using TaskManager.Application.Teams;
 using TaskManager.Domain.Entities;
 using TaskManager.Domain.Enums;
@@ -20,12 +22,14 @@ namespace TaskManager.API.Controllers;
 public class TeamsController : ControllerBase
 {
     private readonly ITeamService _teamService;
+    private readonly IAccountService _accountService;
     protected APIResponse _response;
     private readonly IMapper _mapper;
 
-    public TeamsController(ITeamService teamService, IMapper mapper)
+    public TeamsController(ITeamService teamService, IMapper mapper, IAccountService accountService)
     {
         _teamService = teamService;
+        _accountService = accountService;
         _response = new();
         _mapper = mapper;
     }
@@ -295,7 +299,111 @@ public async Task<ActionResult<APIResponse>> UpdateTeam(Guid id, [FromBody] Upda
     }
 
 
+    [HttpPost("invite")]
+    public async Task<IActionResult> SendInvite([FromBody] SendTeamInviteDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email))
+        {
+            return BadRequest(new APIResponse
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                IsSuccess = false,
+                ErrorMessages = new List<string> { "Email is required." }
+            });
+        }
+        await _teamService.SendTeamInviteAsync(dto);
+        return Ok(new APIResponse
+        {
+            StatusCode = HttpStatusCode.OK,
+            IsSuccess = true,
+            Result = "Invitation email sent successfully."
+        });
+    }
+
+
+
+    [HttpGet("accept-invite")]
+    public async Task<IActionResult> AcceptInvite([FromQuery] string token)
+    {
+        var response = new APIResponse();
+
+        try
+        {
+            var invitation = await _teamService.GetInvitationByTokenAsync(token);
+
+            if (invitation == null)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                response.IsSuccess = false;
+                response.ErrorMessages.Add($"Invitation with token '{token}' was not found.");
+                return NotFound(response);
+            }
+
+            // Check expiration
+            var isExpired = invitation.CreatedAt.AddHours(48) < DateTime.UtcNow;
+            if (isExpired)
+            {
+                invitation.Status = InvitationStatus.Expired;
+                await _teamService.UpdateInvitationAsync(invitation);
+
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.IsSuccess = false;
+                response.ErrorMessages.Add("Invitation has expired.");
+                return BadRequest(response);
+            }
+
+            if (invitation.Status != InvitationStatus.Pending)
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.IsSuccess = false;
+                response.ErrorMessages.Add("Invitation is no longer valid.");
+                return BadRequest(response);
+            }
+
+            // Mark as accepted
+            invitation.Status = InvitationStatus.Accepted;
+            invitation.RespondedAt = DateTime.UtcNow;
+            await _teamService.UpdateInvitationAsync(invitation);
+
+            var user = await _accountService.GetUserByEmailAsync(invitation.Email);
+
+            if (user == null || user.UserId == Guid.Empty)
+            {
+                response.StatusCode = HttpStatusCode.NotFound;
+                response.IsSuccess = false;
+                response.ErrorMessages.Add($"No user found with email '{invitation.Email}'.");
+                return NotFound(response);
+            }
+
+            var member = new Member
+            {
+                TeamId = invitation.TeamId,
+                Email = invitation.Email,
+                UserId = user.UserId,
+                JoinedAt = DateTime.UtcNow
+            };
+
+            await _teamService.AddMemberAsync(member);
+
+            response.StatusCode = HttpStatusCode.OK;
+            response.Result = "Invitation accepted and member added to the team.";
+            return Ok(response);
+        }
+        catch (Exception)
+        {
+            response.StatusCode = HttpStatusCode.InternalServerError;
+            response.IsSuccess = false;
+            response.ErrorMessages.Add($"An unexpected error occurred");
+            return StatusCode((int)HttpStatusCode.InternalServerError, response);
+        }
+    }
+
+
+
 }
 
-// Team B id  8eac8abd-e132-4ce7-9e76-9835c19e7fc0
-// nancy id   cdabd140-05eb-437f-9d74-692bc1611d66
+
+
+// Team B id  51fb4149-65bb-450f-b8f3-c177064ae31f
+
+

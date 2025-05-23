@@ -28,5 +28,10 @@ namespace TaskManager.Application.Services
         {
             await _accountRepository.LogoutAsync();
         }
+
+        public Task<UserDTO?> GetUserByEmailAsync(string email)
+        {
+            return _accountRepository.GetUserByEmailAsync(email);
+        }
     }
 }

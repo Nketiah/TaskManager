@@ -4,6 +4,7 @@ using TaskManager.Application.DTOs.Member;
 using TaskManager.Application.DTOs.Team;
 using TaskManager.Application.Interfaces;
 using TaskManager.Domain.Entities;
+using TaskManager.Domain.Enums;
 
 
 namespace TaskManager.Application.Teams;
@@ -13,12 +14,14 @@ public class TeamService : ITeamService
     private readonly ITeamRepository _teamRepository;
     private readonly ILogger<TeamService> _logger;
     private readonly IMapper _mapper;
+    private readonly IEmailService _emailService;
 
-    public TeamService(ITeamRepository teamRepository, ILogger<TeamService> logger, IMapper mapper)
+    public TeamService(ITeamRepository teamRepository, ILogger<TeamService> logger, IMapper mapper, IEmailService emailService)
     {
         _teamRepository = teamRepository;
         _logger = logger;
         _mapper = mapper;
+        _emailService = emailService;
     }
 
     public async Task<TeamDto> CreateTeamAsync(Team teamRequest)
@@ -103,8 +106,35 @@ public class TeamService : ITeamService
         return await _teamRepository.GetMemberByUserIdAsync(userId, teamId);
     }
 
-    public Task<string?> GetUserFullNameByMemberIdAsync(Guid memberId)
+    public Task<string?> GetUserFullNameByMemberIdAsync(Guid? memberId)
     {
         return _teamRepository.GetUserFullNameByMemberIdAsync(memberId);
+    }
+
+    public async Task SendTeamInviteAsync(SendTeamInviteDto dto)
+    {
+        var invitation = await _teamRepository.CreateTeamInvitationAsync(dto.TeamId, dto.Email);
+
+        // Prepare and send email
+        var inviteLink = $"https://yourapi.com/api/team/accept-invite?token={invitation.Token}";
+        var subject = "You're Invited to Join a Team!";
+        var body = $"Hello, You’ve been invited to join a team. Click <a href='{inviteLink}'>here</a> to accept the invite";
+
+        await _emailService.SendEmailAsync(dto.Email, subject, body);
+    }
+
+    public async Task<TeamInvitation?> GetInvitationByTokenAsync(string token)
+    {
+        return await _teamRepository.GetInvitationByTokenAsync(token);
+    }
+
+    public Task UpdateInvitationAsync(TeamInvitation invitation)
+    {
+        return _teamRepository.UpdateInvitationAsync(invitation);
+    }
+
+    public async Task<Member?> GetMemberByIdAsync(Guid memberId)
+    {
+       return await _teamRepository.GetMemberByIdAsync(memberId);
     }
 }

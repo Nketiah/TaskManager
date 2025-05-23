@@ -2,6 +2,7 @@
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using TaskManager.API.Shared;
 using TaskManager.Application.DTOs.Account;
 using TaskManager.Application.Interfaces;
@@ -125,5 +126,22 @@ public class AccountRepository : IAccountRepository
         await _signInManager.SignOutAsync();
     }
 
+
+    public async Task<UserDTO?> GetUserByEmailAsync(string email)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            return null;
+        }
+        return new UserDTO
+        {
+            IsSuccess = true,
+            UserId = user.Id,
+            FullName = user.FullName,
+            Email = user.Email!,
+            Token = null
+        };
+    }
 
 }

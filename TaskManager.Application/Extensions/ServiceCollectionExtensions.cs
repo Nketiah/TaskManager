@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using TaskManager.Application.Account;
 using TaskManager.Application.ActivityLogs;
-using TaskManager.Application.Interfaces;
 using TaskManager.Application.Services;
 using TaskManager.Application.Tasks;
 using TaskManager.Application.Teams;

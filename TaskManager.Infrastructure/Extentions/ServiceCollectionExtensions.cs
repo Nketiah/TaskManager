@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TaskManager.Application.Interfaces;
+using TaskManager.Infrastructure.Logging;
+using TaskManager.Infrastructure.Notification;
 using TaskManager.Infrastructure.Persistence;
 using TaskManager.Infrastructure.Repositories;
 using TaskManager.Infrastructure.Services;
@@ -21,5 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
+        services.AddScoped<IFileLogger, FileLogger>();
+        services.AddTransient<IEmailService, EmailService>();
     }
 }
