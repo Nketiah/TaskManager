@@ -1,11 +1,14 @@
 ﻿using System.Net;
+using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskManager.API.Shared;
 using TaskManager.Application.Account;
+using TaskManager.Application.ActivityLogs;
 using TaskManager.Application.DTOs.Member;
 using TaskManager.Application.DTOs.Team;
+using TaskManager.Application.Features.Teams.Queries.GetAllTeams;
 using TaskManager.Application.Interfaces;
 using TaskManager.Application.Teams;
 using TaskManager.Domain.Entities;
@@ -25,13 +28,15 @@ public class TeamsController : ControllerBase
     private readonly IAccountService _accountService;
     protected APIResponse _response;
     private readonly IMapper _mapper;
+    private readonly IActivityLogService _activityLogService;
 
-    public TeamsController(ITeamService teamService, IMapper mapper, IAccountService accountService)
+    public TeamsController(ITeamService teamService, IMapper mapper, IAccountService accountService, IActivityLogService activityLogService)
     {
         _teamService = teamService;
         _accountService = accountService;
         _response = new();
         _mapper = mapper;
+        _activityLogService = activityLogService;
     }
 
 
@@ -129,12 +134,22 @@ public class TeamsController : ControllerBase
             };
 
             var createdTeam = await _teamService.CreateTeamAsync(team);
+            var nameClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Email);
+            string userName = nameClaim?.Value ?? "Unknown User";
 
             _response.Result = _mapper.Map<TeamDto>(createdTeam);
             _response.StatusCode = HttpStatusCode.Created;
 
+            await _activityLogService.LogAsync(
+            teamId: createdTeam.Id,
+            action: "Create Task",
+            performedBy: userName ?? "Some User",
+            details: $"Task '{createdTeam.Name}' was created."
+          );
+
             return CreatedAtRoute("GetById", new { id = createdTeam.Id }, _response);
         }
+
         catch (Exception ex)
         {
             _response.IsSuccess = false;
@@ -405,5 +420,7 @@ public async Task<ActionResult<APIResponse>> UpdateTeam(Guid id, [FromBody] Upda
 
 
 // Team B id  51fb4149-65bb-450f-b8f3-c177064ae31f
+// team creation
+// member joining
 
 

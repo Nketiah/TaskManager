@@ -129,5 +129,8 @@ public class TeamRepository : ITeamRepository
             .FirstOrDefaultAsync(m => m.Id == memberId);
     }
 
-
+    public Task<bool> IsTeamNameUniqueAsync(string name)
+    {
+        throw new NotImplementedException();
+    }
 }

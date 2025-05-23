@@ -2,9 +2,9 @@
 
 using TaskManager.Application.DTOs.Member;
 
-namespace TaskManager.Application.DTOs.Team;
+namespace TaskManager.Application.Features.Teams.Queries.GetTeamDetails;
 
-public class TeamDto
+public class TeamDetailsDto
 {
     public Guid Id { get; set; }
 

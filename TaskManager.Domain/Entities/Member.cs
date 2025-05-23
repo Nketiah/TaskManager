@@ -1,5 +1,6 @@
 ﻿
 
+using System.Text.Json.Serialization;
 using TaskManager.Domain.Enums;
 
 
@@ -23,6 +24,7 @@ namespace TaskManager.Domain.Entities
 
         public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 
+        [JsonIgnore]
         public ICollection<TaskItem> AssignedTasks { get; set; } = new List<TaskItem>();
     }
 }

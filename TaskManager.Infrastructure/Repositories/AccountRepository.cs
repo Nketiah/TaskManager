@@ -1,12 +1,16 @@
 ﻿
 
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using TaskManager.API.Shared;
 using TaskManager.Application.DTOs.Account;
 using TaskManager.Application.Interfaces;
+using TaskManager.Domain.Entities;
 using TaskManager.Infrastructure.Identity;
+using TaskManager.Infrastructure.Persistence;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 
 namespace TaskManager.Infrastructure.Repositories;
@@ -17,18 +21,21 @@ public class AccountRepository : IAccountRepository
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly ILogger<AccountRepository> _logger;
+    private readonly TaskManagerDbContext _db;
 
     public AccountRepository(
          UserManager<ApplicationUser> userManager,
          SignInManager<ApplicationUser> signInManager,
          ILogger<AccountRepository> logger,
-         IJwtTokenGenerator jwtTokenGenerator
+         IJwtTokenGenerator jwtTokenGenerator,
+         TaskManagerDbContext db
         )
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _db = db;
     }
 
 
@@ -144,4 +151,15 @@ public class AccountRepository : IAccountRepository
         };
     }
 
+
+    public async Task<List<TaskItem>> GetTasksForUserAsync(Guid userId)
+    {
+        return await _db.Tasks
+            .Include(t => t.AssignedTo)
+            .Where(t => t.AssignedTo != null && t.AssignedTo.UserId == userId)
+            .ToListAsync();
+    }
+
 }
+
+// CQRS(Command Query Responsibility Segregation)

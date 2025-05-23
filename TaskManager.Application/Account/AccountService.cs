@@ -1,6 +1,7 @@
 ﻿using TaskManager.Application.Account;
 using TaskManager.Application.DTOs.Account;
 using TaskManager.Application.Interfaces;
+using TaskManager.Domain.Entities;
 
 namespace TaskManager.Application.Services
 {
@@ -32,6 +33,11 @@ namespace TaskManager.Application.Services
         public Task<UserDTO?> GetUserByEmailAsync(string email)
         {
             return _accountRepository.GetUserByEmailAsync(email);
+        }
+
+        public Task<List<TaskItem>> GetTasksForUserAsync(Guid userId)
+        {
+            return _accountRepository.GetTasksForUserAsync(userId);
         }
     }
 }

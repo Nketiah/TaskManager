@@ -20,4 +20,5 @@ public interface ITeamRepository
     Task<TeamInvitation?> GetInvitationByTokenAsync(string token);
     Task UpdateInvitationAsync(TeamInvitation invitation);
     Task<Member?> GetMemberByIdAsync(Guid memberId);
+    Task<bool> IsTeamNameUniqueAsync(string name);
 }

@@ -18,5 +18,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITaskService, TaskService>();
         services.AddScoped<IActivityLogService, ActivityLogService>();
         services.AddAutoMapper(typeof(ServiceCollectionExtensions).Assembly);
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly));
     }
 }

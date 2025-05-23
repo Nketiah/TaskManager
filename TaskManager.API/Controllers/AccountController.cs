@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TaskManager.API.Shared;
 using TaskManager.Application.Account;
 using TaskManager.Application.DTOs.Account;
+using TaskManager.Application.DTOs.Task;
 using TaskManager.Application.Interfaces;
 
 
@@ -92,6 +93,30 @@ namespace TaskManager.API.Controllers
             await _accountService.LogoutAsync();
             return NoContent();
         }
+
+
+        [HttpGet("user-tasks")]
+        [Authorize]
+        public async Task<IActionResult> GetUserTasks()
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+            {
+                return BadRequest("User ID not found or invalid in claims.");
+            }
+
+            var tasks = await _accountService.GetTasksForUserAsync(userId);
+            var taskDtos = tasks.Select(t => new TaskItemDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                CreatedAt = t.CreatedAt,
+                AssignedToEmail = t.AssignedTo?.Email
+            }).ToList();
+            return Ok(taskDtos);
+        }
+
 
     }
 }
